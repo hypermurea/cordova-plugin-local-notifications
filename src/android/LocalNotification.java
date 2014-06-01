@@ -19,28 +19,28 @@
     under the License.
 */
 
-package de.appplant.cordova.plugin.localnotification;
+    package de.appplant.cordova.plugin.localnotification;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
+    import java.util.ArrayList;
+    import java.util.Map;
+    import java.util.Set;
 
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaInterface;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CordovaWebView;
-import org.apache.cordova.PluginResult;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+    import org.apache.cordova.CallbackContext;
+    import org.apache.cordova.CordovaInterface;
+    import org.apache.cordova.CordovaPlugin;
+    import org.apache.cordova.CordovaWebView;
+    import org.apache.cordova.PluginResult;
+    import org.json.JSONArray;
+    import org.json.JSONException;
+    import org.json.JSONObject;
 
-import android.app.AlarmManager;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
+    import android.app.AlarmManager;
+    import android.app.NotificationManager;
+    import android.app.PendingIntent;
+    import android.content.Context;
+    import android.content.Intent;
+    import android.content.SharedPreferences;
+    import android.content.SharedPreferences.Editor;
 
 /**
  * This plugin utilizes the Android AlarmManager in combination with StatusBar
@@ -68,6 +68,33 @@ public class LocalNotification extends CordovaPlugin {
 
     @Override
     public boolean execute (String action, final JSONArray args, final CallbackContext command) throws JSONException {
+
+        if (action.equalsIgnoreCase("addMultiple")) {
+            cordova.getThreadPool().execute( new Runnable() {
+                public void run() {
+                    try {
+                        JSONArray events = args.getJSONArray(0);
+
+                        cancelAll();
+                        unpersistAll();
+
+                        for(int i = 0; i < events.length(); i ++) {
+
+                            JSONObject arguments = events.optJSONObject(i);
+                            Options options = new Options(context).parse(arguments);
+                            JSONArray persistArray = new JSONArray();
+                            persistArray.put(arguments);
+                            persist(options.getId(), persistArray);
+                            add(options, true);                      
+                        }
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+        }
+
         if (action.equalsIgnoreCase("add")) {
             cordova.getThreadPool().execute( new Runnable() {
                 public void run() {
@@ -156,8 +183,8 @@ public class LocalNotification extends CordovaPlugin {
         long triggerTime = options.getDate();
 
         Intent intent = new Intent(context, Receiver.class)
-            .setAction("" + options.getId())
-            .putExtra(Receiver.OPTIONS, options.getJSONObject().toString());
+        .setAction("" + options.getId())
+        .putExtra(Receiver.OPTIONS, options.getJSONObject().toString());
 
         AlarmManager am  = getAlarmManager();
         PendingIntent pi = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -184,7 +211,7 @@ public class LocalNotification extends CordovaPlugin {
          * and cancel it.
          */
         Intent intent = new Intent(context, Receiver.class)
-            .setAction("" + notificationId);
+        .setAction("" + notificationId);
 
         PendingIntent pi       = PendingIntent.getBroadcast(context, 0, intent, 0);
         AlarmManager am        = getAlarmManager();
