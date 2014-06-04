@@ -119,6 +119,54 @@
 }
 
 /**
+ * Cancels all local notifications and schedules multiple new ones
+ *
+ * @param {NSMutableDictionary} properties
+ *      The properties of the notifications
+ */
+- (void) addMultiple:(CDVInvokedUrlCommand*)command
+{
+	[self.commandDelegate runInBackground:^{
+        NSArray* notifications = self.scheduledNotifications;
+		
+        for (UILocalNotification* notification in notifications) {
+            [self cancelNotification:notification fireEvent:YES];
+        }
+		
+        [[UIApplication sharedApplication]
+         cancelAllLocalNotifications];
+		
+        [[UIApplication sharedApplication]
+         setApplicationIconBadgeNumber:0];
+		
+		// Schedule notifications
+		NSArray* arguments = [command arguments];
+		
+        NSArray* events = [arguments objectAtIndex:0];
+		NSLog(@"events: %@", events);
+		
+		for (int i = 0; i < [events count]; i++) {
+			NSLog(@"event i: %@", [events objectAtIndex:i]);
+			NSMutableDictionary* properties = [events objectAtIndex:i];
+			
+			NSString* id = [properties objectForKey:@"id"];
+			
+			if ([self isNotificationScheduledWithId:id]) {
+				UILocalNotification* notification = [self notificationWithId:id];
+				
+				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.3 * NSEC_PER_SEC),
+							   dispatch_get_main_queue(), ^{
+								   [self cancelNotification:notification fireEvent:NO];
+							   });
+			}
+			
+			[self scheduleNotificationWithProperties:properties];
+		}
+		
+    }];
+}
+
+/**
  * Cancels a given local notification.
  *
  * @param {NSString} id

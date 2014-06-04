@@ -36,5 +36,7 @@
 - (void) isScheduled:(CDVInvokedUrlCommand*)command;
 // Retrieves a list of ids from all currently pending notifications
 - (void) getScheduledIds:(CDVInvokedUrlCommand*)command;
+// Cancels all currently scheduled notifications and schedules multiple new notifications
+- (void) addMultiple:(CDVInvokedUrlCommand*)command;
 
 @end
